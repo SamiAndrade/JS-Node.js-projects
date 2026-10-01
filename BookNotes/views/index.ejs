@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookNotes</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <header>
+        <h2>Sâmi Carvalho</h2>
+    </header>
+<main>
+        <section class="overview">
+            <div class="card-description">
+                <h2>Books I've Read</h2>
+                <p>
+                    <%= books.length %> <%= books.length === 1 ? 'book' : 'books' %> so far. 
+                    Here's my book notes for each of them.
+                </p>
+            </div>
+
+            <!-- Search -->
+            <form action="/search" method="GET" class="search-form" role="search">
+                <label for="search" class="visually-hidden">Search books</label>
+                <input 
+                    type="search" 
+                    name="q" 
+                    id="search" 
+                    placeholder="Search by title or author..."
+                >
+                <button type="submit">Search</button>
+            </form>
+
+            <!-- Add a book -->
+            <form class="book" action="/add" method="post">
+                <p>Add a book</p>
+                <input type="text" name="title" placeholder="Title" required autocomplete="off">
+                <input type="number" name="rate" min="1" max="5" placeholder="Rating (1-5)" required>
+                <input type="date" name="date" value="<%= date %>" required>
+                <textarea name="notes" placeholder="Book notes..." rows="2" required></textarea>
+                <button class="add" type="submit">+</button>
+            </form>
+        </section>
+
+        <!-- List of Books -->
+        <section class="book-list" aria-label="Book collection">
+            <% if (books && books.length > 0) { %>
+                <% books.forEach(book => { %>
+                    <article class="book-card">
+                        <!-- Cover of Book and Rating -->
+                        <div class="book-media">
+                            <img 
+                                src="<%= book.cover_url || '/images/default-cover.jpg' %>" 
+                                alt="Cover of <%= book.title %>" 
+                                loading="lazy"
+                            >
+                            <div class="card-stars" aria-label="Rating: <%= book.rate %> out of 5 stars">
+                                <% for (let i = 1; i <= 5; i++) { %>
+                                    <span class="star <%= i <= book.rate ? 'filled' : '' %>" aria-hidden="true">&#9733;</span>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Description of the Books -->
+                        <div id="view-mode-<%= book.id %>" class="book-details">
+                            <h3><%= book.title %></h3>
+                            <time datetime="<%= book.date %>">
+                                Read on <%= new Date(book.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                            </time>
+                            <p class="book-notes"><%= book.notes %></p>
+                        </div>
+
+                        <!-- Edit -->
+                        <form id="edit-mode-<%= book.id %>" class="edit-form" action="/edit" method="post" hidden>
+                            <input type="hidden" name="id" value="<%= book.id %>">
+                            
+                            <label>Title:</label>
+                            <input type="text" name="title" value="<%= book.title %>" required autocomplete="off">
+                            
+                            <label>Rating (1-5):</label>
+                            <input type="number" name="rate" min="1" max="5" value="<%= book.rate %>" required>
+                            
+                            <label>Read Date:</label>
+                            <% 
+                               // Formata a data para yyyy-MM-dd para ser aceita pelo input type="date"
+                               const formattedDate = new Date(book.date).toISOString().split('T')[0];
+                            %>
+                            <input type="date" name="date" value="<%= formattedDate %>" required>
+                            
+                            <label>Notes:</label>
+                            <textarea name="notes" rows="3" required><%= book.notes %></textarea>
+                            
+                            <div class="edit-buttons">
+                                <button type="submit" class="save-btn">Save</button>
+                                <button type="button" class="cancel-btn" onclick="toggleEdit('<%= book.id %>', false)">Cancel</button>
+                            </div>
+                        </form>
+
+                        <!-- Ações (Editar e Deletar) -->
+                        <div id="actions-<%= book.id %>" class="card-actions">
+                            <button class="edit-btn" onclick="toggleEdit('<%= book.id %>', true)">🖋️</button>
+                            
+                            <form action="/delete" method="post">
+                                <input type="hidden" name="deleteItemId" value="<%= book.id %>">
+                                <button type="submit" class="delete-btn">❌</button>
+                            </form>
+                        </div>
+                    </article>
+                <% }) %>
+            <% } else { %>
+                <p class="empty-state">No books found.</p>
+            <% } %>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; <%= new Date().getFullYear() %> Sâmi Carvalho. All rights reserved.</p>
+    </footer>
+     <script>
+    function toggleEdit(id, isEditing) {
+            const viewMode = document.getElementById("view-mode-" + id);
+            const editMode = document.getElementById("edit-mode-" + id);
+            const actions = document.getElementById("actions-" + id);
+
+            if (isEditing) {
+                viewMode.setAttribute("hidden", true);
+                actions.setAttribute("hidden", true);
+                editMode.removeAttribute("hidden");
+            } else {
+                editMode.setAttribute("hidden", true);
+                viewMode.removeAttribute("hidden");
+                actions.removeAttribute("hidden");
+            }
+        }
+  </script>
+</body>
+</html>
